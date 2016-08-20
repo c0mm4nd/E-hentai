@@ -1,4 +1,4 @@
-# e-hentai
+# E-Hentai
 
 Pic Downloader  for Lofi.E-hentai
 
@@ -9,7 +9,12 @@ Pic Downloader  for Lofi.E-hentai
 0.0.2：change arguments in CLI, add autozip function, add http proxy
 
 # Requirement
+
 `pip install -r req.txt`
+
+ 解决lxml在win下无法安装的问题:  
+ 
+ 请使用预编译的二进制包 http://www.lfd.uci.edu/~gohlke/pythonlibs/#lxml
 
 # 使用方法
 
