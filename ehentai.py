@@ -8,6 +8,17 @@ import os
 import zipfile
 import getopt
 
+req = requests.session()
+req.headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:43.0) Gecko/20100101 Firefox/43.0',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    'Accept-Language': 'zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3',
+    'Accept-Encoding': 'gzip, deflate',
+    'Referer': 'http://www.baidu.com',
+    'Connection': 'keep-alive',
+    'Cache-Control': 'max-age=0',
+}
+
 def downloadImageFile(imgUrl):  
     local_filename = imgUrl.split('/')[-1]  
     print "Download Image File=", local_filename  
@@ -25,8 +36,12 @@ def download_pics(url):
 	all_subURL = index.xpath('//*[@id="gh"]/div/a')
 	title = index.xpath('//*[@id="gn"]/text()')
 	title = title[0]
+	if title is None:
+		title = time.time()
 	path = cleanPath(title)
-	dir(title)
+	if path is None:
+		path = str(time.time())
+	dir(path)
 	picurl = all_subURL[0].attrib['href']
 	nexturl = None
 	while picurl != nexturl:
@@ -45,7 +60,7 @@ def download_pics(url):
 		downloadImageFile(img[0].attrib['src'])
 	os.chdir('..')
 	zip_dir(path, path+'.zip')
-	pass
+	return True
 
 def zip_dir(dirname,zipfilename):
     filelist = []
@@ -55,7 +70,6 @@ def zip_dir(dirname,zipfilename):
         for root, dirs, files in os.walk(dirname):
             for name in files:
                 filelist.append(os.path.join(root, name))
-         
     zf = zipfile.ZipFile(zipfilename, "w", zipfile.zlib.DEFLATED)
     for tar in filelist:
         arcname = tar[len(dirname):]
@@ -63,7 +77,7 @@ def zip_dir(dirname,zipfilename):
     zf.close()
 
 def cleanPath(path):
-	path=path.strip()
+	path = path.strip()
 	path = path.replace('.', '')
 	path = path.replace('|', '')
 	path = path.replace(':', '')
@@ -75,17 +89,6 @@ def dir(path):
 
 
 if __name__ == '__main__':
-	req = requests.session()
-	req.headers = {
-	    'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:43.0) Gecko/20100101 Firefox/43.0',
-	    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-	    'Accept-Language': 'zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3',
-	    'Accept-Encoding': 'gzip, deflate',
-	    'Referer': 'http://www.baidu.com',
-	    'Connection': 'keep-alive',
-	    'Cache-Control': 'max-age=0',
-	}
-
 	try:
 		options,args = getopt.getopt(sys.argv[1:],"u:p:",["url=","proxy="])
 	except getopt.GetoptError:
