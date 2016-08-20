@@ -1,30 +1,38 @@
 # coidng: utf8
 import requests
-import sys
 from lxml import etree
-import wget
+import sys
 import re
 import time
 import os
+import zipfile
+import getopt
 
-def download_pics(url, headers):
-	index = etree.HTML(requests.get(url, headers=headers).text)
+def downloadImageFile(imgUrl):  
+    local_filename = imgUrl.split('/')[-1]  
+    print "Download Image File=", local_filename  
+    r = req.get(imgUrl, stream=True) # here we need to set stream = True parameter  
+    with open(local_filename, 'wb') as f:  
+        for chunk in r.iter_content(chunk_size=1024):  
+            if chunk: # filter out keep-alive new chunks  
+                f.write(chunk)  
+                f.flush()  
+        f.close()  
+    return local_filename
+
+def download_pics(url):
+	index = etree.HTML(req.get(url).text)
 	all_subURL = index.xpath('//*[@id="gh"]/div/a')
 	title = index.xpath('//*[@id="gn"]/text()')
 	title = title[0]
+	path = cleanPath(title)
 	dir(title)
-	# print all_subURL
-	# u = all_subURL[0]
-	# print u
-	# picurl = re.match(r'http://lofi.e-hentai.org/s/[A-Za-z0-9]+/[A-Za-z0-9]+', u)
 	picurl = all_subURL[0].attrib['href']
-	# print picurl
 	nexturl = None
 	while picurl != nexturl:
 		if nexturl != None:
 			picurl = nexturl
-		txt = requests.get(picurl, headers=headers).text
-		# print txt.encode('utf8')
+		txt = req.get(picurl).text
 		page1 = etree.HTML(txt)
 		page2 = etree.HTML(txt)
 		img = page1.xpath('//*[@id="sm"]')
@@ -33,26 +41,42 @@ def download_pics(url, headers):
 			if url.text == 'Next Page >':
 				nexturl = url.attrib['href']
 				pass
-		# print nexturl
 		time.sleep(5)
-		wget.download(img[0].attrib['src'])
+		downloadImageFile(img[0].attrib['src'])
+	os.chdir('..')
+	zip_dir(path, path+'.zip')
 	pass
 
-def dir(path):
+def zip_dir(dirname,zipfilename):
+    filelist = []
+    if os.path.isfile(dirname):
+        filelist.append(dirname)
+    else :
+        for root, dirs, files in os.walk(dirname):
+            for name in files:
+                filelist.append(os.path.join(root, name))
+         
+    zf = zipfile.ZipFile(zipfilename, "w", zipfile.zlib.DEFLATED)
+    for tar in filelist:
+        arcname = tar[len(dirname):]
+        zf.write(tar,arcname)
+    zf.close()
+
+def cleanPath(path):
 	path=path.strip()
 	path = path.replace('.', '')
 	path = path.replace('|', '')
-	# path=path.rstrip("\\")
-	# delset = path.punctuation
-	# path = line.translate(None,delset)
+	path = path.replace(':', '')
+
+def dir(path):
 	if not os.path.exists(path):
 		os.makedirs(path)
 	os.chdir(path)
-	# return path
 
 
 if __name__ == '__main__':
-	headers = {
+	req = requests.session()
+	req.headers = {
 	    'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:43.0) Gecko/20100101 Firefox/43.0',
 	    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
 	    'Accept-Language': 'zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3',
@@ -61,11 +85,23 @@ if __name__ == '__main__':
 	    'Connection': 'keep-alive',
 	    'Cache-Control': 'max-age=0',
 	}
-	url = sys.argv[1]
-	if url is None:
-        # print "The Url Can NOT Be Nil"
-		get_index = requests.get(url, headers=headers)
-		# print get_index.text
-	else :
-		download_pics(url, headers)
 
+	try:
+		options,args = getopt.getopt(sys.argv[1:],"u:p:",["url=","proxy="])
+	except getopt.GetoptError:
+		sys.exit()
+
+	for name,value in options:
+		if name in ("-u","--url"):
+			url = value
+		if name in ("-p","--proxy"):
+			proxy = value
+			req.proxies = {
+				'http': proxy,
+			}
+	if url is None:
+		# get_index = req.get(url)
+		# print(get_index.text)
+		print('No Url')
+	else :
+		download_pics(url)
