@@ -5,7 +5,10 @@ Pic Downloader  for Lofi.E-hentai
 0.0.1: 
 
 # Requirement
-`pip install -r req.txt`
+`pip install -r req.txt`  
+
+解决lxml在win下无法安装的问题:  
+请使用预编译的二进制包 http://www.lfd.uci.edu/~gohlke/pythonlibs/#lxml 
 
 # 使用方法
 1.上lofi.e-hentai.org找自己喜欢的本子
