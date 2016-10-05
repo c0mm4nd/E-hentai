@@ -1,0 +1,6 @@
+$def with (gallery, list, quote, str)
+
+$for filename in list:
+    $ src = quote(str("../static/gallery/"+gallery+"/"+filename))
+    <img src="$src">
+    <br/>
